@@ -1,0 +1,80 @@
+﻿@model IEnumerable<OrderModel>
+@{
+    ViewData["Title"] = "Danh sách đơn hàng";
+}
+<h3>Danh sách đơn hàng</h3>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Mã đơn hàng</th>
+            <th scope="col">Người dùng</th>
+            <th scope="col">Ngày đặt hàng</th>
+            <th scope="col">Trạng thái đơn hàng</th>
+            <th scope="col">Hành động</th>
+            <th scope="col">Quản lý sản phẩm</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <th scope="row">@item.Id</th>
+                <td>@item.OrderCode</td>
+                <td>@item.UserName</td>
+                <td>@item.CreateDate.ToString("dd/MM/yyyy")</td>
+                <td>
+                    @if (item.Status == 1)
+                    {
+                        <span id="status-@item.Id" class="text text-warning">Đơn hàng mới</span>
+                    }
+                    else if (item.Status == 0)
+                    {
+                        <span id="status-@item.Id" class="text text-success">Đã xử lý</span>
+                    }
+                </td>
+                <td>
+                    <a class="btn btn-warning btn-sm"
+                       href="@Url.Action("ViewOrder", "Order", new { orderCode = item.OrderCode })">
+                        Xem đơn hàng
+                    </a>
+                </td>
+                <td>
+                    @if (item.Status == 1)
+                    {
+                        <button class="btn btn-success btn-sm"
+                                onclick="markAsProcessed('@Url.Action("MarkAsProcessed", "Order", new { id = item.Id })', '@item.Id')">
+                            Xử lý đơn hàng
+                        </button>
+                    }
+                    <button class="btn btn-danger btn-sm"
+                            onclick="confirmDelete('@Url.Action("Delete", "Order", new { Id = item.Id })')">
+                        Xóa
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        function markAsProcessed(url, orderId) {
+            $.post(url)
+                .done(function (data) {
+                    $('#status-' + orderId).removeClass('badge-warning').addClass('badge-success').text('Đã xử lý');
+                    $('#status-' + orderId).closest('tr').find('button.btn-success').prop('disabled', true).text('Đã xử lý');
+                })
+                .fail(function () {
+                    alert('Đã xảy ra lỗi khi cập nhật trạng thái đơn hàng.');
+                });
+        }
+
+        function confirmDelete(deleteUrl) {
+            if (confirm("Bạn có chắc chắn muốn xóa đơn hàng này?")) {
+                window.location.href = deleteUrl;
+            }
+        }
+    </script>
+}

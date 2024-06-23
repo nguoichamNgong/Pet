@@ -1,0 +1,72 @@
+﻿@model IEnumerable<ProductModel>
+
+<div class="col-sm-3">
+    @Html.Partial("_SidebarPartial")
+</div>
+
+<style>
+    .product-image-wrapper {
+        height: 450px;
+        margin-bottom: 20px;
+        border: 1px solid #e1e1e1;
+        padding: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+    }
+
+    .productinfo {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+        .productinfo img {
+            max-height: 250px;
+            object-fit: cover;
+        }
+
+        .productinfo h2, .productinfo p {
+            margin: 10px 0;
+        }
+
+    .add-to-cart {
+        margin-top: 10px;
+    }
+
+    .features_items {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .single-products {
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="col-sm-9 padding-right">
+    <div class="features_items">
+        <!--features_items-->
+        @foreach (var item in Model)
+        {
+            <div class="col-sm-4">
+                <div class="product-image-wrapper">
+                    <div class="single-products">
+                        <div class="productinfo text-center">
+                            <a asp-action="Details" asp-controller="Product" asp-route-Id="@item.Id">
+                                <img src="~/media/products/@item.Image" alt="@item.Name" width="100%" />
+                                <h2>@String.Format("{0:0,0} ₫", item.Price)</h2>
+                                <p>@item.Name</p>
+                                <p>Danh mục: @item.Category.Name</p>
+                                <p>Thương hiệu: @item.Brand.Name</p>
+                            </a>
+                            <a class="btn btn-default add-to-cart" asp-action="Add" asp-controller="Cart" asp-route-Id="@item.Id">
+                                <i class="fa fa-shopping-cart"></i> Add to cart
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div><!--features_items-->
+</div>

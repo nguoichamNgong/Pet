@@ -1,0 +1,163 @@
+﻿@model Pet.Models.ViewModels.CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<section id="cart_items">
+    <div class="container">
+        <form id="checkoutForm" asp-controller="Checkout" asp-action="Checkout" method="post">
+            <div class="breadcrumbs">
+                <ol class="breadcrumb">
+                    <li><a href="#">Home</a></li>
+                    <li class="active">Check out</li>
+                </ol>
+            </div><!--/breadcrums-->
+            <!-- Thông tin người mua hàng -->
+            <div class="shopper-informations row">
+                <div class="col-sm-5">
+                    <div class="bill-to">
+                        <h3>Billing Information</h3>
+                        <form>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="fullName">Full Name</label>
+                                        <input type="text" class="form-control" id="fullName" placeholder="Enter your full name" name="FullName" required>
+                                        <span class="text-danger">@Html.ValidationMessageFor(model => model.FullName)</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="phoneNumber">Phone Number</label>
+                                        <input type="text" class="form-control" id="phoneNumber" placeholder="Enter your phone number" name="PhoneNumber" required>
+                                        <span class="text-danger">@Html.ValidationMessageFor(model => model.PhoneNumber)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="shippingAddress">Shipping Address</label>
+                                <input type="text" class="form-control" id="shippingAddress" placeholder="Enter your shipping address" name="ShippingAddress" required>
+                                <span class="text-danger">@Html.ValidationMessageFor(model => model.ShippingAddress)</span>
+                            </div>
+                        </form>
+                        <!-- Nút Checkout -->
+                        <button type="submit" id="checkoutButton" class="btn btn-primary">Đặt hàng (COD)</button>
+                        <div id="paypal-button-container" style="max-width:1000px;"></div>
+                    </div>
+
+                </div>
+                <div class="col-sm-4">
+                    <div class="order-message">
+                        <p>Shipping Order</p>
+                        <textarea name="Notes" placeholder="Notes about your order, Special Notes for Delivery" rows="6"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chi tiết đơn hàng -->
+            <div class="table-responsive cart_info">
+                <table class="table table-condensed">
+                    <thead>
+                        <tr class="cart_menu">
+                            <td class="image">Image</td>
+                            <td class="Name">Tên sản phẩm</td>
+                            <td class="price">Giá</td>
+                            <td class="quantity">Số lượng</td>
+                            <td class="total">Tổng</td>
+                            <td class="delete"></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.CartItems != null && Model.CartItems.Any())
+                        {
+                            @foreach (var item in Model.CartItems)
+                            {
+                                <tr>
+                                    <td class="cart_product">
+                                        <!-- Hiển thị hình ảnh sản phẩm -->
+                                        <img src="~/media/products/@item.Image" width="25%" />
+                                    </td>
+                                    <td class="cart_description">
+                                        <!-- Hiển thị tên sản phẩm -->
+                                        <h4>@item.ProductName</h4>
+                                    </td>
+                                    <td class="cart_price">
+                                        <!-- Hiển thị giá sản phẩm -->
+                                        <p>@String.Format("{0:0,0} ₫", item.Price)</p>
+                                    </td>
+                                    <td class="cart_quantity">
+                                        <!-- Hiển thị số lượng sản phẩm -->
+                                        <div class="cart_quantity_button">
+                                            <input class="cart_quantity_input" type="text" name="quantity" value="@item.Quantity" autocomplete="off" size="2" disabled>
+                                        </div>
+                                    </td>
+                                    <td class="cart_total">
+                                        <!-- Hiển thị tổng tiền của sản phẩm -->
+                                        <p class="cart_total_price">@String.Format("{0:0,0} ₫", Model.CartItems.Where(x => x.ProductId == @item.ProductId).Sum(x => x.Quantity * x.Price))</p>
+
+                                    </td>
+                                </tr>
+                            }
+                            <!-- Hiển thị tổng tiền của toàn bộ đơn hàng -->
+                            <tr>
+                                <td colspan="5">Tổng Tiền: <p class="cart_total_price">@String.Format("{0:0,0} ₫", Model.GrandTotal)</p></td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6"><h4>Giỏ Hàng Trống</h4></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+</section> <!--/#cart_items-->
+@section Scripts{
+    <script src="https://www.paypal.com/sdk/js?client-id=@ViewBag.PaypalClientId"></script>
+    <script>
+        $(document).ready(function () {
+            $("#GiongKhachHang").change(function () {
+                if ($(this).prop("checked")) {
+                    $(this).val(true);
+                    $(".delivery-info").addClass("d-none");
+                } else {
+                    $(this).val(false);
+                    $(".delivery-info").removeClass("d-none");
+                }
+            });
+        });
+        paypal.Buttons({
+            style: {
+                layout: 'vertical',
+                color: 'silver',
+                tagline: 'false'
+            },
+            createOrder: (data, actions) => {
+                return fetch("/Checkout/create-paypal-order", {
+                    method: "post",
+                }).then((response) => {
+                    if (!response.ok) {
+                        return response.json().then(error => { throw error; });
+                    }
+                    return response.json();
+                }).then((order) => order.id)
+                    .catch(error => alert(error.message));
+            },
+            onApprove: (data, actions) => {
+                return fetch(`/Checkout/capture-paypal-order?orderId=${data.orderID}`, {
+                    method: "post",
+                }).then((response) => {
+                    if (!response.ok) {
+                        return response.json().then(error => { throw error; });
+                    }
+                    //Đổi địa chỉ tới action thông báo thành công
+                    window.location.href = "/Cart/PaymentSuccess";
+                }).catch(error => alert(error.message));
+            }
+        }).render('#paypal-button-container');
+    </script>
+}

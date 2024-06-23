@@ -1,0 +1,52 @@
+﻿@model Pet.Models.ViewModels.OrderDetailsViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+}
+
+<h3>Chi tiết đơn hàng</h3>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Mã đơn hàng</th>
+            <th scope="col">Người dùng</th>
+            <th scope="col">Số lượng</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col">Giá</th>
+            <th scope="col">Thành tiền</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.OrderDetails)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.OrderCode</td>
+                <td>@item.UserName</td>
+                <td>@item.Quantity</td>
+                <td>
+                    @if (Model.Order.Status == 1)
+                    {
+                        <span class="text text-warning">Đơn hàng mới</span>
+                    }
+                    else if (Model.Order.Status == 0)
+                    {
+                        <span class="text text-success">Đã xử lý</span>
+                    }
+                </td>
+                <td>@String.Format("{0:C0}", item.Price)</td>
+                <td>@String.Format("{0:C0}", item.Price * item.Quantity)</td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th colspan="6" class="text-right">Tổng cộng:</th>
+            <th>@String.Format("{0:C0}", Model.OrderDetails.Sum(i => i.Price * i.Quantity))</th>
+        </tr>
+    </tfoot>
+</table>
+
+<a class="btn btn-primary" href="@Url.Action("Index", "Order")">Quay lại danh sách đơn hàng</a>
